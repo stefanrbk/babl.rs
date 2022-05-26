@@ -1,0 +1,10 @@
+[package]
+authors = ["Stefan Kewatt <stefan.kewatt@gmail.com>"]
+edition = "2021"
+name = "libimg"
+version = "0.1.0"
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
