@@ -1,7 +1,7 @@
 [package]
 authors = ["Stefan Kewatt <stefan.kewatt@gmail.com>"]
 edition = "2021"
-name = "libimg"
+name = "babl"
 version = "0.1.0"
 
 [lib]
