@@ -1,19 +1,19 @@
-use std::{sync::{Mutex, RwLock}, ffi::OsString};
+use std::{
+    ffi::OsString,
+    sync::{Mutex, RwLock},
+};
 
 use libloading::{Library, Symbol};
 use once_cell::sync::Lazy;
 
-use crate::{instance::BablInstance, db::BablDb, needs_db, BABL_EXTENSION, babl_log, Babl};
+use crate::{babl_log, db::BablDb, needs_db, Babl};
 
 needs_db!();
 
-pub static CURRENT_EXTENDER: Lazy<Mutex<Option<usize>>> = Lazy::new(|| {
-    Mutex::new(None)
-});
+pub static CURRENT_EXTENDER: Lazy<Mutex<Option<usize>>> = Lazy::new(|| Mutex::new(None));
 
 #[repr(C)]
 pub struct BablExtender {
-    instance: BablInstance,
     lib: Library,
     disposed: Mutex<bool>,
 }
@@ -21,17 +21,15 @@ pub struct BablExtender {
 impl BablExtender {
     pub fn new(path: impl Into<String>, lib: Library) -> usize {
         {
-            let babl = Babl::new_extension(Self {
-                instance: BablInstance::new( 
-                    BABL_EXTENSION, 
-                    0, 
-                    None, 
-                    path.into(),
-                    ""
-                ),
-                lib,
-                disposed: Mutex::new(false),
-            });
+            let babl = Babl::new_extension(
+                0,
+                path.into(),
+                "",
+                BablExtender {
+                    lib,
+                    disposed: Mutex::new(false),
+                },
+            );
             DB.write().unwrap().insert(Mutex::new(babl))
         }
     }
@@ -41,9 +39,7 @@ impl BablExtender {
     pub fn set(new_extender: Option<usize>) {
         *CURRENT_EXTENDER.lock().unwrap() = new_extender;
     }
-    pub fn destroy() {
-
-    }
+    pub fn destroy() {}
     fn load_failed() {
         Self::set(None);
     }
@@ -57,22 +53,27 @@ impl BablExtender {
                     babl_log!("{}", e);
                     Self::load_failed();
                     return None;
-                },
+                }
             };
             let idx = Self::new(path.clone(), lib);
 
             Self::set(Some(idx));
 
             let mut db = DB.write().unwrap();
-            let ext = db.get(Self::get_current().unwrap()).unwrap().lock().unwrap();
+            let ext = db
+                .get(Self::get_current().unwrap())
+                .unwrap()
+                .lock()
+                .unwrap();
 
-            let init: Symbol<unsafe extern fn()->i32> = match ext.extension.lib.get(b"init\0") {
+            let init: Symbol<unsafe extern "C" fn() -> i32> = match ext.unwrap_extender().lib.get(b"init\0")
+            {
                 Ok(result) => result,
                 Err(e) => {
                     babl_log!("{}", e);
                     Self::load_failed();
                     return None;
-                },
+                }
             };
 
             if init() != 0 {
@@ -94,7 +95,7 @@ impl Drop for BablExtender {
             let disposed = self.disposed.lock();
             let mut disposed = disposed.unwrap();
             if !disposed.to_owned() {
-                let destroy: Result<Symbol<unsafe extern fn()>, _> = self.lib.get(b"destroy\0");
+                let destroy: Result<Symbol<unsafe extern "C" fn()>, _> = self.lib.get(b"destroy\0");
                 if let Ok(destroy) = destroy {
                     destroy();
                 }

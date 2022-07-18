@@ -1,6 +1,9 @@
 use std::{collections::HashMap, sync::Mutex, any::Any};
 
-use crate::{instance::{BablList, BablEachFunction}, Babl, extension::BablExtender};
+use crate::{Babl, extension::BablExtender};
+
+pub type BablEachFunction = fn(&mut Babl, &mut Box<dyn Any>);
+pub type BablList = Vec<Mutex<Babl>>;
 
 #[macro_export]
 macro_rules! needs_db {
@@ -36,12 +39,12 @@ impl BablDb {
         let mut babl = item.lock().unwrap();
         unsafe {
             let len = self.babl_list.len();
-            if babl.instance.id != 0 {
-                self.id_hash.insert(babl.instance.id, len);
+            if babl.id != 0 {
+                self.id_hash.insert(babl.id, len);
             }
-            self.name_hash.insert(babl.instance.name.clone(), len);
+            self.name_hash.insert(babl.name.clone(), len);
 
-            babl.instance.creator = BablExtender::get_current();
+            babl.creator = BablExtender::get_current();
 
             drop(babl);
             self.babl_list.push(item);
@@ -73,11 +76,11 @@ impl BablDb {
         unsafe {
             let babl = self.babl_list.remove(idx);
             let babl = babl.lock().unwrap();
-            let id = babl.instance.id;
+            let id = babl.id;
             if self.id_hash.get(&id).is_some() {
                 self.id_hash.remove(&id);
             }
-            let name = &babl.instance.name;
+            let name = &babl.name;
             if self.name_hash.get(name).is_some() {
                 self.name_hash.remove(name);
             }

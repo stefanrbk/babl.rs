@@ -1,18 +1,16 @@
-use std::{sync::{RwLock, Mutex}, mem::ManuallyDrop};
+use std::sync::{RwLock, Mutex};
 
 use once_cell::sync::Lazy;
 
 use crate::{
-    db::BablDb,
-    instance::{BablInstance, BablList},
-    Babl, BABL_TYPE, needs_db,
+    db::{BablDb, BablList},
+    Babl, needs_db,
 };
 
 needs_db!();
 
 #[repr(C)]
 pub struct BablType {
-    pub instance: BablInstance,
     pub from_list: BablList,
     pub bits: i32,
     pub min_val: f64,
@@ -106,25 +104,19 @@ impl BablTypeBuilder {
 
         match babl {
             Some(babl) => {
-                if !unsafe {&db.babl_list[babl].lock().unwrap().r#type}.is_type_duplicate(self.bits) {
+                if !&db.babl_list[babl].lock().unwrap().unwrap_type().is_type_duplicate(self.bits) {
                     println!("BablType '{}' already registered as different type!", self.name);
                 }
                 Some(babl)
             },
             None => {
                 let bt = BablType {
-                    instance: BablInstance::new(
-                        BABL_TYPE,
-                        self.id,
-                        None,
-                        self.name,
-                        self.doc.unwrap_or_default()),
                     from_list: Vec::new(),
                     bits: self.bits,
                     min_val: self.min_val.unwrap(),
                     max_val: self.max_val.unwrap(),
                 };
-                let babl = Mutex::new(Babl { r#type: ManuallyDrop::new(bt) });
+                let babl = Mutex::new(Babl::new_type(self.id, self.name, self.doc.unwrap_or_default(), bt));
                 let idx = db.count();
                 db.insert(babl);
 

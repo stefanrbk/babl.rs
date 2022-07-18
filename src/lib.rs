@@ -1,6 +1,3 @@
-use std::mem::ManuallyDrop;
-
-use instance::BablClassType;
 
 const BABL_MAGIC: i32 = 0xbab100;
 const BABL_INSTANCE: i32 = BABL_MAGIC;
@@ -27,36 +24,12 @@ const BABL_SKY: i32 = BABL_EXTENSION + 1;
 
 mod db;
 mod extension;
-mod instance;
 mod r#type;
+mod babl;
+
+pub use babl::Babl;
 
 pub fn babl_extension(name: impl Into<String>) {}
-
-pub union Babl {
-    pub(crate) instance: ManuallyDrop<instance::BablInstance>,
-    pub(crate) r#type: ManuallyDrop<r#type::BablType>,
-    pub(crate) extension: ManuallyDrop<extension::BablExtender>,
-}
-
-impl Babl {
-    pub(crate) fn class_type(&self) -> BablClassType {
-        unsafe { self.instance.class_type }
-    }
-    pub(crate) fn new_type(r#type: r#type::BablType) -> Babl {
-        unsafe {
-            Self {
-                r#type: ManuallyDrop::new(r#type),
-            }
-        }
-    }
-    pub(crate) fn new_extension(extension: extension::BablExtender) -> Babl {
-        unsafe {
-            Self {
-                extension: ManuallyDrop::new(extension),
-            }
-        }
-    }
-}
 
 #[macro_export]
 macro_rules! babl_log {
