@@ -28,6 +28,7 @@ mod conversion;
 mod db;
 mod extension;
 mod format;
+mod image;
 mod model;
 mod polynomial;
 mod sampling;
