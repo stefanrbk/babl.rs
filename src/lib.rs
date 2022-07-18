@@ -39,7 +39,45 @@ pub union Babl {
 }
 
 impl Babl {
-    fn class_type(&self) -> BablClassType {
+    pub(crate) fn class_type(&self) -> BablClassType {
         unsafe { self.instance.class_type }
     }
+    pub(crate) fn new_type(r#type: r#type::BablType) -> Babl {
+        unsafe {
+            Self {
+                r#type: ManuallyDrop::new(r#type),
+            }
+        }
+    }
+    pub(crate) fn new_extension(extension: extension::BablExtender) -> Babl {
+        unsafe {
+            Self {
+                extension: ManuallyDrop::new(extension),
+            }
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! babl_log {
+    ($($arg:tt)*) => {
+        let line = line!();
+        let file = file!();
+
+        eprint!("{}:{}\n\t", line, file);
+        eprintln!($($arg)*);
+    };
+}
+
+#[macro_export]
+macro_rules! babl_fatal {
+    ($($arg:tt)*) => {
+        let line = line!();
+        let file = file!();
+
+        eprint!("{}:{}\n\t", line, file);
+        eprintln!($($arg)*);
+
+        panic!();
+    };
 }

@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::Mutex, any::Any};
 
-use crate::{instance::{BablList, BablEachFunction}, Babl};
+use crate::{instance::{BablList, BablEachFunction}, Babl, extension::BablExtender};
 
 #[macro_export]
 macro_rules! needs_db {
@@ -33,13 +33,16 @@ impl BablDb {
         self.babl_list.len()
     }
     pub fn insert(&mut self, item: Mutex<Babl>) -> usize {
-        let babl = item.lock().unwrap();
+        let mut babl = item.lock().unwrap();
         unsafe {
             let len = self.babl_list.len();
             if babl.instance.id != 0 {
                 self.id_hash.insert(babl.instance.id, len);
             }
             self.name_hash.insert(babl.instance.name.clone(), len);
+
+            babl.instance.creator = BablExtender::get_current();
+
             drop(babl);
             self.babl_list.push(item);
             len
@@ -62,5 +65,22 @@ impl BablDb {
     }
     pub fn exist_by_name(&self, name: impl Into<String>) -> Option<usize> {
         Some(*self.name_hash.get(&name.into())?)
+    }
+    pub fn get(&self, idx: usize) -> Option<&Mutex<Babl>> {
+        self.babl_list.get(idx)
+    }
+    pub fn remove(&mut self, idx: usize) {
+        unsafe {
+            let babl = self.babl_list.remove(idx);
+            let babl = babl.lock().unwrap();
+            let id = babl.instance.id;
+            if self.id_hash.get(&id).is_some() {
+                self.id_hash.remove(&id);
+            }
+            let name = &babl.instance.name;
+            if self.name_hash.get(name).is_some() {
+                self.name_hash.remove(name);
+            }
+        }
     }
 }
