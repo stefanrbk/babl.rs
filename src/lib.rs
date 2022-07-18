@@ -1,4 +1,4 @@
-
+#![allow(dead_code)]
 const BABL_MAGIC: i32 = 0xbab100;
 const BABL_INSTANCE: i32 = BABL_MAGIC;
 const BABL_TYPE: i32 = BABL_INSTANCE + 1;

@@ -1,6 +1,6 @@
-use std::{collections::HashMap, sync::Mutex, any::Any};
+use std::{any::Any, collections::HashMap, sync::Mutex};
 
-use crate::{Babl, extension::BablExtender};
+use crate::{extension::BablExtender, Babl};
 
 pub type BablEachFunction = fn(&mut Babl, &mut Box<dyn Any>);
 pub type BablList = Vec<Mutex<Babl>>;
@@ -37,19 +37,18 @@ impl BablDb {
     }
     pub fn insert(&mut self, item: Mutex<Babl>) -> usize {
         let mut babl = item.lock().unwrap();
-        unsafe {
-            let len = self.babl_list.len();
-            if babl.id != 0 {
-                self.id_hash.insert(babl.id, len);
-            }
-            self.name_hash.insert(babl.name.clone(), len);
 
-            babl.creator = BablExtender::get_current();
-
-            drop(babl);
-            self.babl_list.push(item);
-            len
+        let len = self.babl_list.len();
+        if babl.id != 0 {
+            self.id_hash.insert(babl.id, len);
         }
+        self.name_hash.insert(babl.name.clone(), len);
+
+        babl.creator = BablExtender::get_current();
+
+        drop(babl);
+        self.babl_list.push(item);
+        len
     }
     pub fn each(&mut self, func: BablEachFunction, user_data: &mut Box<dyn Any>) {
         for item in self.babl_list.iter_mut() {
@@ -73,17 +72,15 @@ impl BablDb {
         self.babl_list.get(idx)
     }
     pub fn remove(&mut self, idx: usize) {
-        unsafe {
-            let babl = self.babl_list.remove(idx);
-            let babl = babl.lock().unwrap();
-            let id = babl.id;
-            if self.id_hash.get(&id).is_some() {
-                self.id_hash.remove(&id);
-            }
-            let name = &babl.name;
-            if self.name_hash.get(name).is_some() {
-                self.name_hash.remove(name);
-            }
+        let babl = self.babl_list.remove(idx);
+        let babl = babl.lock().unwrap();
+        let id = babl.id;
+        if self.id_hash.get(&id).is_some() {
+            self.id_hash.remove(&id);
+        }
+        let name = &babl.name;
+        if self.name_hash.get(name).is_some() {
+            self.name_hash.remove(name);
         }
     }
 }
