@@ -31,6 +31,7 @@ mod format;
 mod model;
 mod polynomial;
 mod sampling;
+mod trc;
 mod r#type;
 
 use std::any::Any;
