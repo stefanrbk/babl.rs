@@ -87,3 +87,19 @@ impl BablExtender {
         None
     }
 }
+
+impl Drop for BablExtender {
+    fn drop(&mut self) {
+        unsafe {
+            let disposed = self.disposed.lock();
+            let mut disposed = disposed.unwrap();
+            if !disposed.to_owned() {
+                let destroy: Result<Symbol<unsafe extern fn()>, _> = self.lib.get(b"destroy\0");
+                if let Ok(destroy) = destroy {
+                    destroy();
+                }
+                *disposed = true;
+            }
+        }
+    }
+}
