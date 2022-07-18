@@ -27,6 +27,7 @@ mod component;
 mod conversion; 
 mod db;
 mod extension;
+mod model; 
 mod r#type;
 
 use std::any::Any;
