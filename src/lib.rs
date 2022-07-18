@@ -27,6 +27,7 @@ mod component;
 mod conversion;
 mod db;
 mod extension;
+mod fish;
 mod format;
 mod image;
 mod model;
