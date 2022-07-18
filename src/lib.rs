@@ -22,13 +22,99 @@ const BABL_IMAGE: i32 = BABL_FISH_PATH + 1;
 const BABL_EXTENSION: i32 = BABL_IMAGE + 1;
 const BABL_SKY: i32 = BABL_EXTENSION + 1;
 
+mod babl;
+mod component;
+mod conversion; 
 mod db;
 mod extension;
 mod r#type;
-mod babl;
-mod component;
+
+use std::any::Any;
 
 pub use babl::Babl;
+
+type BablFuncLinear = fn(
+    conversion: &mut Babl,
+    src: &Box<dyn Any>,
+    dst: &mut Box<dyn Any>,
+    n: usize,
+    user_data: &mut Box<dyn Any>,
+) -> Box<dyn Any>;
+type BablFuncPlanar = fn(
+    conversion: &mut Babl,
+    src_bands: usize,
+    src: &Box<dyn Any>,
+    src_pitch: &[usize],
+    dst_bands: usize,
+    dst: &mut Box<dyn Any>,
+    dst_pitch: &[usize],
+    n: usize,
+    user_data: &mut Box<dyn Any>,
+) -> Box<dyn Any>;
+type BablFuncPlane = fn(
+    conversion: &mut Babl,
+    src: &Box<dyn Any>,
+    dst: &mut Box<dyn Any>,
+    src_pitch: usize,
+    dst_pitch: usize,
+    n: usize,
+    user_data: &mut Box<dyn Any>,
+) -> Box<dyn Any>;
+enum BablFunc {
+    Linear(BablFuncLinear),
+    Planar(BablFuncPlanar),
+    Plane(BablFuncPlane),
+}
+
+impl BablFunc {
+    /// Returns `true` if the babl func is [`Linear`].
+    ///
+    /// [`Linear`]: BablFunc::Linear
+    #[must_use]
+    fn is_linear(&self) -> bool {
+        matches!(self, Self::Linear(..))
+    }
+
+    fn as_linear(&self) -> Option<&BablFuncLinear> {
+        if let Self::Linear(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    /// Returns `true` if the babl func is [`Planar`].
+    ///
+    /// [`Planar`]: BablFunc::Planar
+    #[must_use]
+    fn is_planar(&self) -> bool {
+        matches!(self, Self::Planar(..))
+    }
+
+    fn as_planar(&self) -> Option<&BablFuncPlanar> {
+        if let Self::Planar(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    /// Returns `true` if the babl func is [`Plane`].
+    ///
+    /// [`Plane`]: BablFunc::Plane
+    #[must_use]
+    fn is_plane(&self) -> bool {
+        matches!(self, Self::Plane(..))
+    }
+
+    fn as_plane(&self) -> Option<&BablFuncPlane> {
+        if let Self::Plane(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+}
 
 pub fn babl_extension(name: impl Into<String>) {}
 
