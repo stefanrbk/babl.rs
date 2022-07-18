@@ -29,6 +29,7 @@ mod db;
 mod extension;
 mod format;
 mod model;
+mod polynomial;
 mod sampling;
 mod r#type;
 
