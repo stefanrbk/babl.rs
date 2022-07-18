@@ -27,6 +27,7 @@ mod component;
 mod conversion; 
 mod db;
 mod extension;
+mod format; 
 mod model; 
 mod r#type;
 
