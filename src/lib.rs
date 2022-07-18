@@ -26,6 +26,7 @@ mod db;
 mod extension;
 mod r#type;
 mod babl;
+mod component;
 
 pub use babl::Babl;
 
