@@ -24,11 +24,12 @@ const BABL_SKY: i32 = BABL_EXTENSION + 1;
 
 mod babl;
 mod component;
-mod conversion; 
+mod conversion;
 mod db;
 mod extension;
-mod format; 
-mod model; 
+mod format;
+mod model;
+mod sampling;
 mod r#type;
 
 use std::any::Any;
